@@ -1,4 +1,6 @@
 
+
+
 import axios from 'axios';
 
 export const FETCH_STOCK_DATA_SUCCESS = 'FETCH_STOCK_DATA_SUCCESS';
@@ -7,10 +9,10 @@ export const SET_SELECTED_STOCK = 'SET_SELECTED_STOCK';
 export const SET_SYMBOL_SEARCH_RESULTS = 'SET_SYMBOL_SEARCH_RESULTS';
 
 export const fetchStockData = (symbol) => {
-  const apiKey = 'LI5QJPW4G9U51BFF';
-  const apiUrl = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=60min&apikey=${apiKey}`;
-
   return async (dispatch) => {
+    const apiKey = 'LI5QJPW4G9U51BFF';
+    const apiUrl = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=60min&apikey=${apiKey}`;
+
     try {
       const response = await axios.get(apiUrl);
       const data = response.data;

@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { connect } from 'react-redux';
 import { fetchStockData, fetchSymbolSearch } from '../../actions/stockActions';
 import StockCard from './StockCard';
@@ -8,10 +9,18 @@ import './Home.css';
 const Home = ({ stockData, error, fetchStockData, fetchSymbolSearch }) => {
   const [searchSymbol, setSearchSymbol] = useState('');
   const [bestMatches, setBestMatches] = useState([]);
+  const dropdownRef = useRef(null);
 
-  const handleSearch = () => {
+  useEffect(() => {
+    document.addEventListener('click', handleOutsideClick);
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, []);
+
+  const handleSearch = async () => {
     if (searchSymbol.trim() !== '') {
-      fetchStockData(searchSymbol);
+      await fetchStockData(searchSymbol);
     }
   };
 
@@ -20,7 +29,7 @@ const Home = ({ stockData, error, fetchStockData, fetchSymbolSearch }) => {
 
     if (symbol.trim() !== '') {
       const matches = await fetchSymbolSearch(symbol);
-      setBestMatches(matches);
+      setBestMatches(matches ? matches : []); // Check for undefined matches
     } else {
       setBestMatches([]);
     }
@@ -28,13 +37,33 @@ const Home = ({ stockData, error, fetchStockData, fetchSymbolSearch }) => {
 
   const handleInputChange = (event) => {
     const symbol = event.target.value.toUpperCase();
-    setSearchSymbol(symbol);
-    handleSymbolSearch(symbol);
+
+    if (event.keyCode === 13) {
+      // Enter key is pressed
+      handleSearch();
+      return;
+    }
+
+    if (symbol.length === 0) {
+      // Input has been cleared
+      setSearchSymbol('');
+      setBestMatches([]);
+    } else {
+      setSearchSymbol(symbol);
+      handleSymbolSearch(symbol);
+    }
   };
 
-  const handleDropdownItemClick = (symbol) => {
-    setSearchSymbol(symbol);
+  const handleDropdownItemClick = async (symbol) => {
     setBestMatches([]);
+    setSearchSymbol(symbol);
+    await fetchStockData(symbol);
+  };
+
+  const handleOutsideClick = (event) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      setBestMatches([]);
+    }
   };
 
   return (
@@ -54,7 +83,7 @@ const Home = ({ stockData, error, fetchStockData, fetchSymbolSearch }) => {
       </div>
 
       {bestMatches.length > 0 && (
-        <div className="dropdownContainer">
+        <div className="dropdownContainer" ref={dropdownRef}>
           <ul className="dropdownList">
             {bestMatches.map((match) => (
               <li key={match} onClick={() => handleDropdownItemClick(match)}>
